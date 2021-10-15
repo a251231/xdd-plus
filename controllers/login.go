@@ -36,6 +36,11 @@ type StepThree struct {
 	Message string `json:"message"`
 }
 
+type StepThree1 struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type Result struct {
 	Code    int         `json:"code"`
 	Data    interface{} `json:"data"`
@@ -78,7 +83,7 @@ func (c *LoginController) GetUserInfo() {
 }
 
 func (c *LoginController) GetQrcode1() {
-	rsp, err := httplib.Get("https://api.kukuqaq.com/jd/qrcode").Response()
+	rsp, err := httplib.Post("https://api.kukuqaq.com/jd/qrcode").Response()
 	if err != nil {
 		logs.Info(err)
 	}
@@ -88,13 +93,19 @@ func (c *LoginController) GetQrcode1() {
 	}
 	s := &models.QQuery{}
 	if len(body) > 0 {
-		json.Unmarshal(body, &s)
+		err := json.Unmarshal(body, &s)
+		if err != nil {
+			return
+		}
 	}
-	jsonByte, _ := json.Marshal(s)
-	jsonStr := string(jsonByte)
-	fmt.Printf("%v", jsonStr)
-	//c.Ctx.WriteString(`{"url":"` + "url" + `","img":"` + base64.StdEncoding.EncodeToString(data) + `"}`) //"data:image/png;base64," +
-
+	//jsonByte, _ := json.Marshal(s)
+	//jsonStr := string(jsonByte)
+	//fmt.Printf("%v", jsonStr)
+	//ddd, _ := base64.StdEncoding.DecodeString(s.Data.QqLoginQrcode.Bytes)
+	//c.Ctx.WriteString(`{"url":"` + "url" + `","img":"` + base64.StdEncoding.EncodeToString(ddd) + `"}`) //"data:image/png;base64," +
+	//logs.Info(`{"url":"` + "url" + `","img":"` + s.Data.QqLoginQrcode.Bytes + `"}`)
+	c.Ctx.WriteString(s.Data.QqLoginQrcode.Bytes)
+	return
 }
 
 func (c *LoginController) GetQrcode() {
@@ -501,7 +512,7 @@ func (c *LoginController) SMSLogin() {
 				ck.Query()
 				msg := fmt.Sprintf("来自短信的添加,账号：%s,QQ: %s", ck.PtPin, qq)
 				(&models.JdCookie{}).Push(msg)
-			} else if !models.HasKey(ptKey) {
+			} else {
 				ck, _ := models.GetJdCookie(ptPin)
 				ck.InPool(ptKey)
 				if qq != "" {
